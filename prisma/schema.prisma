@@ -33,10 +33,11 @@ model User {
 }
 
 model Product {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   category    String
   price       Int
   description String
-  isAvailable Boolean @default(true)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }

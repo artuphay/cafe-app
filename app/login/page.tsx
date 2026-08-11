@@ -1,94 +1,189 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  isAvailable: boolean;
+}
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+function OrderContent() {
+  const searchParams = useSearchParams();
+  const tableNumber = searchParams.get('table') || '1';
+
+  const [menuList, setMenuList] = useState<Product[]>([]);
+  const [cart, setCart] = useState<{ [key: string]: number }>({});
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => setMenuList(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const addToCart = (id: string) => {
+    setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  };
+
+  const removeFromCart = (id: string) => {
+    setCart((prev) => {
+      const updated = { ...prev };
+      if (updated[id] > 1) {
+        updated[id] -= 1;
+      } else {
+        delete updated[id];
+      }
+      return updated;
+    });
+  };
+
+  const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const item = menuList.find((m) => m.id === id);
+    return sum + (item ? item.price * qty : 0);
+  }, 0);
+
+  const handleCheckout = async () => {
+    if (totalItems === 0) return;
+    setIsLoading(true);
+
+    const itemsToSubmit = Object.entries(cart).map(([id, qty]) => {
+      const item = menuList.find((m) => m.id === id)!;
+      return {
+        name: item.name,
+        qty: qty,
+        price: item.price,
+      };
+    });
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          tableNumber,
+          items: itemsToSubmit,
+          totalPrice,
+        }),
       });
 
       if (res.ok) {
-        router.push('/admin');
+        alert(`Pesanan untuk Meja #${tableNumber} berhasil dikirim ke Kasir!`);
+        setCart({});
       } else {
-        const data = await res.json();
-        setError(data.error || 'Login gagal');
+        alert('Gagal mengirim pesanan.');
       }
     } catch (err) {
-      setError('Terjadi kesalahan jaringan');
+      alert('Terjadi kesalahan jaringan.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const filteredMenu = selectedCategory === 'Semua' 
+    ? menuList 
+    : menuList.filter((item) => item.category === selectedCategory);
+
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4 text-stone-800">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-stone-200">
-        <Link href="/" className="text-xs text-amber-800 underline mb-4 block">← Kembali ke Beranda</Link>
-        <h1 className="text-2xl font-bold text-amber-950 mb-2">Login Staf Kafe</h1>
-        <p className="text-xs text-stone-500 mb-6">Masuk untuk mengakses Kasir dan Dashboard Admin</p>
-
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-xl text-sm mb-4 border border-red-200">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-stone-600 mb-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              placeholder="Masukkan username (contoh: admin)"
-              className="w-full p-3 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-800 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-stone-600 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Masukkan password"
-              className="w-full p-3 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-800 text-sm"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-amber-900 hover:bg-amber-950 text-white p-3 rounded-xl font-bold text-sm transition disabled:bg-stone-400 mt-2"
-          >
-            {loading ? 'Memproses...' : 'Masuk Sekarang'}
-          </button>
-        </form>
-
-        <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
-          <p className="font-bold mb-1">Akun Default Pertama Kali:</p>
-          <p>• Username: <strong>admin</strong></p>
-          <p>• Password: <strong>admin123</strong></p>
+    <div className="min-h-screen bg-stone-100 text-stone-800 pb-24">
+      <div className="bg-amber-900 text-white p-4 sticky top-0 z-10 flex justify-between items-center shadow-md">
+        <div>
+          <Link href="/" className="text-xs underline text-amber-200 block mb-1">← Beranda</Link>
+          <h1 className="text-xl font-bold">Pesan - Meja #{tableNumber}</h1>
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-amber-200 block">Total Keranjang</span>
+          <span className="font-bold text-lg">Rp {totalPrice.toLocaleString('id-ID')}</span>
         </div>
       </div>
+
+      <div className="flex gap-2 p-4 overflow-x-auto bg-white border-b">
+        {['Semua', 'Makanan', 'Minuman', 'Dessert'].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
+              selectedCategory === cat 
+                ? 'bg-amber-900 text-white' 
+                : 'bg-stone-200 text-stone-700 hover:bg-stone-300'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-4 max-w-2xl mx-auto space-y-4">
+        {filteredMenu.map((item) => {
+          const qty = cart[item.id] || 0;
+          return (
+            <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-stone-200">
+              <div className="pr-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-lg text-amber-950">{item.name}</h3>
+                  {!item.isAvailable && (
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-bold">Habis</span>
+                  )}
+                </div>
+                <p className="text-xs text-stone-500 mb-2">{item.description}</p>
+                <span className="font-semibold text-amber-800">Rp {item.price.toLocaleString('id-ID')}</span>
+              </div>
+              <div>
+                {!item.isAvailable ? (
+                  <button disabled className="bg-stone-200 text-stone-400 px-3 py-1.5 rounded-lg text-xs font-bold cursor-not-allowed">
+                    Habis
+                  </button>
+                ) : qty === 0 ? (
+                  <button
+                    onClick={() => addToCart(item.id)}
+                    className="bg-amber-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-900 transition whitespace-nowrap"
+                  >
+                    + Tambah
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 bg-amber-100 p-1.5 rounded-lg border border-amber-300">
+                    <button onClick={() => removeFromCart(item.id)} className="w-7 h-7 bg-amber-800 text-white rounded font-bold">-</button>
+                    <span className="font-bold text-amber-900">{qty}</span>
+                    <button onClick={() => addToCart(item.id)} className="w-7 h-7 bg-amber-800 text-white rounded font-bold">+</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {totalItems > 0 && (
+        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto bg-amber-900 text-white p-4 rounded-2xl shadow-2xl flex justify-between items-center z-20">
+          <div>
+            <p className="text-xs text-amber-200">{totalItems} Item Dipilih</p>
+            <p className="font-bold text-lg">Rp {totalPrice.toLocaleString('id-ID')}</p>
+          </div>
+          <button 
+            onClick={handleCheckout}
+            disabled={isLoading}
+            className="bg-amber-500 hover:bg-amber-600 disabled:bg-stone-400 text-amber-950 px-5 py-2.5 rounded-xl font-bold transition"
+          >
+            {isLoading ? 'Mengirim...' : 'Pesan Sekarang →'}
+          </button>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Memuat Menu...</div>}>
+      <OrderContent />
+    </Suspense>
   );
 }

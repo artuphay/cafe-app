@@ -1,30 +1,49 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const MENU_DATA = [
-  { id: 1, name: 'Kopi Susu Senja', category: 'Minuman', price: 22000, desc: 'Espresso dengan gula aren dan susu segar' },
-  { id: 2, name: 'Americano', category: 'Minuman', price: 18000, desc: 'Espresso ganda dengan air panas/es' },
-  { id: 3, name: 'Matcha Latte', category: 'Minuman', price: 25000, desc: 'Matcha Jepang dengan susu UHT' },
-  { id: 4, name: 'Nasi Goreng Spesial', category: 'Makanan', price: 32000, desc: 'Nasi goreng dengan telur, ayam, dan kerupuk' },
-  { id: 5, name: 'Croissant Cokelat', category: 'Dessert', price: 20000, desc: 'Roti croissant renyah isi cokelat lumer' },
-];
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  description: string;
+  isAvailable: boolean;
+}
 
 function OrderContent() {
   const searchParams = useSearchParams();
   const tableNumber = searchParams.get('table') || '1';
 
-  const [cart, setCart] = useState<{ [key: number]: number }>({});
+  const [menuList, setMenuList] = useState<Product[]>([]);
+  const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [isLoading, setIsLoading] = useState(false);
 
-  const addToCart = (id: number) => {
+  // Mengambil data menu dinamis dari Database API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setMenuList(data);
+        }
+      } catch (err) {
+        console.error('Gagal mengambil menu:', err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const addToCart = (id: string) => {
     setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart((prev) => {
       const updated = { ...prev };
       if (updated[id] > 1) {
@@ -38,7 +57,7 @@ function OrderContent() {
 
   const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
   const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
-    const item = MENU_DATA.find((m) => m.id === Number(id));
+    const item = menuList.find((m) => m.id === id);
     return sum + (item ? item.price * qty : 0);
   }, 0);
 
@@ -47,7 +66,7 @@ function OrderContent() {
     setIsLoading(true);
 
     const itemsToSubmit = Object.entries(cart).map(([id, qty]) => {
-      const item = MENU_DATA.find((m) => m.id === Number(id))!;
+      const item = menuList.find((m) => m.id === id)!;
       return {
         name: item.name,
         qty: qty,
@@ -70,7 +89,7 @@ function OrderContent() {
         alert(`Pesanan untuk Meja #${tableNumber} berhasil dikirim ke Kasir!`);
         setCart({});
       } else {
-        alert('Gagal mengirim pesanan. Silakan coba lagi.');
+        alert('Gagal mengirim pesanan.');
       }
     } catch (err) {
       alert('Terjadi kesalahan jaringan.');
@@ -80,8 +99,8 @@ function OrderContent() {
   };
 
   const filteredMenu = selectedCategory === 'Semua' 
-    ? MENU_DATA 
-    : MENU_DATA.filter((item) => item.category === selectedCategory);
+    ? menuList 
+    : menuList.filter((item) => item.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-800 pb-24">
@@ -118,12 +137,21 @@ function OrderContent() {
           return (
             <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-stone-200">
               <div className="pr-4">
-                <h3 className="font-bold text-lg text-amber-950">{item.name}</h3>
-                <p className="text-xs text-stone-500 mb-2">{item.desc}</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-lg text-amber-950">{item.name}</h3>
+                  {!item.isAvailable && (
+                    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded font-bold">Habis</span>
+                  )}
+                </div>
+                <p className="text-xs text-stone-500 mb-2">{item.description}</p>
                 <span className="font-semibold text-amber-800">Rp {item.price.toLocaleString('id-ID')}</span>
               </div>
               <div>
-                {qty === 0 ? (
+                {!item.isAvailable ? (
+                  <button disabled className="bg-stone-200 text-stone-400 px-3 py-1.5 rounded-lg text-xs font-bold cursor-not-allowed">
+                    Habis
+                  </button>
+                ) : qty === 0 ? (
                   <button
                     onClick={() => addToCart(item.id)}
                     className="bg-amber-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-900 transition whitespace-nowrap"
