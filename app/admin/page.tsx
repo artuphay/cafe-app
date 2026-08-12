@@ -38,6 +38,21 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
+    const verifyLogin = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (!res.ok) {
+          window.location.href = '/login';
+        }
+      } catch (err) {
+        window.location.href = '/login';
+      }
+    };
+
+    verifyLogin();
+  }, []);
+
+  useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 3000);
     return () => clearInterval(interval);
