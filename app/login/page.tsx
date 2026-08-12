@@ -37,53 +37,53 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4 text-stone-800">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-stone-200">
-        <Link href="/" className="text-xs text-amber-800 underline mb-4 block">← Kembali ke Beranda</Link>
-        <h1 className="text-2xl font-bold text-amber-950 mb-2">Login Staf Kafe</h1>
-        <p className="text-xs text-stone-500 mb-6">Masuk untuk mengakses Kasir dan Dashboard Admin</p>
+    <div className="min-h-screen bg-stone-900 font-sans flex items-center justify-center p-4 text-stone-100">
+      <div className="bg-stone-800/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-md w-full border border-stone-700">
+        <Link href="/" className="text-xs text-amber-400 underline mb-4 block">← Kembali ke Beranda Kafe</Link>
+        <h1 className="text-2xl font-black text-stone-100 mb-1">Login Staf Kafe</h1>
+        <p className="text-xs text-stone-400 mb-6">Masuk untuk mengakses Kasir dan Dashboard Admin</p>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-xl text-sm mb-4 border border-red-200">
+          <div className="bg-red-900/50 text-red-300 p-3 rounded-xl text-xs mb-4 border border-red-800">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-stone-600 mb-1">Username</label>
+            <label className="block text-xs font-bold text-stone-300 mb-1">Username</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="Masukkan username (contoh: admin)"
-              className="w-full p-3 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-800 text-sm"
+              placeholder="admin"
+              className="w-full p-3 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 text-sm focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-600 mb-1">Password</label>
+            <label className="block text-xs font-bold text-stone-300 mb-1">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Masukkan password"
-              className="w-full p-3 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-800 text-sm"
+              placeholder="••••••••"
+              className="w-full p-3 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 text-sm focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-amber-900 hover:bg-amber-950 text-white p-3 rounded-xl font-bold text-sm transition disabled:bg-stone-400 mt-2"
+            className="w-full bg-amber-600 hover:bg-amber-500 text-stone-950 p-3 rounded-xl font-extrabold text-sm transition shadow-lg mt-2 disabled:bg-stone-700"
           >
             {loading ? 'Memproses...' : 'Masuk Sekarang'}
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
+        <div className="mt-6 p-4 bg-amber-950/40 rounded-2xl border border-amber-800/50 text-xs text-amber-300">
           <p className="font-bold mb-1">Akun Default Pertama Kali:</p>
           <p>• Username: <strong>admin</strong></p>
           <p>• Password: <strong>admin123</strong></p>
