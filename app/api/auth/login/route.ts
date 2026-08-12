@@ -5,19 +5,25 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    // Buat akun admin bawaan otomatis jika database user masih kosong
+    // Otomatis buat akun Admin & Kasir bawaan jika database user masih kosong
     const userCount = await prisma.user.count();
     if (userCount === 0) {
-      await prisma.user.create({
-        data: {
-          username: 'admin',
-          password: 'admin123',
-          role: 'admin',
-        },
+      await prisma.user.createMany({
+        data: [
+          {
+            username: 'admin',
+            password: 'admin123',
+            role: 'admin',
+          },
+          {
+            username: 'kasir',
+            password: 'kasir123',
+            role: 'cashier',
+          },
+        ],
       });
     }
 
-    // Cari user di database
     const user = await prisma.user.findUnique({
       where: { username },
     });
@@ -26,12 +32,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Username atau password salah' }, { status: 401 });
     }
 
-    // Simpan status login di Cookie HTTP-Only
     const response = NextResponse.json({ success: true, role: user.role });
     response.cookies.set('user_session', JSON.stringify({ id: user.id, username: user.username, role: user.role }), {
       httpOnly: true,
       path: '/',
-      maxAge: 60 * 60 * 24, // Berlaku 1 hari
+      maxAge: 60 * 60 * 24, // 1 hari
     });
 
     return response;

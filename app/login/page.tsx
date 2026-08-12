@@ -24,7 +24,13 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        router.push('/admin');
+        const data = await res.json();
+        // Pengalihan otomatis berdasarkan role
+        if (data.role === 'cashier') {
+          router.push('/cashier');
+        } else {
+          router.push('/admin');
+        }
       } else {
         const data = await res.json();
         setError(data.error || 'Login gagal');
@@ -40,8 +46,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-stone-900 font-sans flex items-center justify-center p-4 text-stone-100">
       <div className="bg-stone-800/80 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-md w-full border border-stone-700">
         <Link href="/" className="text-xs text-amber-400 underline mb-4 block">← Kembali ke Beranda Kafe</Link>
-        <h1 className="text-2xl font-black text-stone-100 mb-1">Login Staf Kafe</h1>
-        <p className="text-xs text-stone-400 mb-6">Masuk untuk mengakses Kasir dan Dashboard Admin</p>
+        <h1 className="text-2xl font-black text-stone-100 mb-1">Portal Login Staf</h1>
+        <p className="text-xs text-stone-400 mb-6">Masuk untuk mengakses Layar Kasir atau Dashboard Admin</p>
 
         {error && (
           <div className="bg-red-900/50 text-red-300 p-3 rounded-xl text-xs mb-4 border border-red-800">
@@ -57,7 +63,7 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              placeholder="admin"
+              placeholder="admin / kasir"
               className="w-full p-3 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 text-sm focus:outline-none focus:border-amber-500"
             />
           </div>
@@ -83,10 +89,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-amber-950/40 rounded-2xl border border-amber-800/50 text-xs text-amber-300">
-          <p className="font-bold mb-1">Akun Default Pertama Kali:</p>
-          <p>• Username: <strong>admin</strong></p>
-          <p>• Password: <strong>admin123</strong></p>
+        <div className="mt-6 p-4 bg-amber-950/40 rounded-2xl border border-amber-800/50 text-xs text-amber-300 space-y-2">
+          <p className="font-bold border-b border-amber-800/50 pb-1">Akun Bawaan Staf:</p>
+          <div>
+            <p className="font-bold text-stone-200">1. Akun Admin (Dashboard Laporan):</p>
+            <p>• Username: <strong>admin</strong> | Password: <strong>admin123</strong></p>
+          </div>
+          <div>
+            <p className="font-bold text-stone-200">2. Akun Kasir (Layar POS Kasir):</p>
+            <p>• Username: <strong>kasir</strong> | Password: <strong>kasir123</strong></p>
+          </div>
         </div>
       </div>
     </div>
