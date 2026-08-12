@@ -43,14 +43,14 @@ model Table {
 }
 
 model StoreSettings {
-  id         String   @id @default("1")
-  storeName  String   @default("Kopi Artuphay")
-  address    String   @default("Jl. Kebon Sirih No. 12, Jakarta")
-  phone      String   @default("081234567890")
-  footerText String   @default("Terima kasih atas kunjungan Anda!")
-  updatedAt  DateTime @updatedAt
+  id           String   @id @default("1")
+  storeName    String   @default("Kopi Artuphay")
+  address      String   @default("Jl. Kebon Sirih No. 12, Jakarta")
+  phone        String   @default("081234567890")
+  footerText   String   @default("Terima kasih atas kunjungan Anda!")
+  qrisImageUrl String?  @default("")
+  updatedAt    DateTime @updatedAt
 }
-
 model Order {
   id             String      @id @default(uuid())
   tableNumber    String

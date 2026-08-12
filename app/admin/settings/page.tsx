@@ -8,20 +8,55 @@ export default function StoreSettingsPage() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [footerText, setFooterText] = useState('');
+  const [qrisImageUrl, setQrisImageUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/settings', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         setStoreName(data.storeName || '');
         setAddress(data.address || '');
         setPhone(data.phone || '');
         setFooterText(data.footerText || '');
+        setQrisImageUrl(data.qrisImageUrl || '');
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleQrisUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.85);
+          setQrisImageUrl(compressed);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,11 +66,11 @@ export default function StoreSettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeName, address, phone, footerText }),
+        body: JSON.stringify({ storeName, address, phone, footerText, qrisImageUrl }),
       });
 
       if (res.ok) {
-        alert('Pengaturan kafe berhasil diperbarui!');
+        alert('Pengaturan kafe & QRIS berhasil diperbarui!');
       } else {
         alert('Gagal menyimpan pengaturan.');
       }
@@ -47,9 +82,9 @@ export default function StoreSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-800 p-6">
+    <div className="min-h-screen bg-stone-100 text-stone-800 p-6 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header dengan UI/UX Navigasi & Breadcrumb Vektor */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-amber-950 text-white p-6 rounded-2xl shadow-lg gap-4">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -71,9 +106,9 @@ export default function StoreSettingsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Pengaturan Identitas Kafe</span>
+              <span>Pengaturan Identitas & QRIS Kafe</span>
             </h1>
-            <p className="text-sm text-amber-200 mt-1">Ubah nama kafe, alamat, kontak, dan teks cetak struk</p>
+            <p className="text-sm text-amber-200 mt-1">Ubah nama kafe, alamat, kontak, dan gambar poster QRIS</p>
           </div>
         </div>
 
@@ -126,6 +161,23 @@ export default function StoreSettingsPage() {
                   placeholder="Contoh: Terima kasih atas kunjungan Anda!"
                   className="w-full p-3 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800"
                 />
+              </div>
+
+              {/* Unggah Poster QRIS Resmi */}
+              <div className="pt-2 border-t border-stone-200">
+                <label className="block text-xs font-bold text-stone-600 mb-1">Unggah Poster QRIS Resmi Kafe (Dari HP/Laptop)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleQrisUpload}
+                  className="w-full text-xs text-stone-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200 cursor-pointer border border-stone-300 rounded-xl p-1"
+                />
+                {qrisImageUrl && (
+                  <div className="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-center space-y-2">
+                    <p className="text-xs font-bold text-amber-900">Pratinjau Poster QRIS Aktif:</p>
+                    <img src={qrisImageUrl} alt="Poster QRIS" className="w-48 mx-auto rounded-xl shadow-md border border-amber-300" />
+                  </div>
+                )}
               </div>
 
               <button

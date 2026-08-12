@@ -42,6 +42,15 @@ function OrderContent() {
   const [appliedPromo, setAppliedPromo] = useState<Promo | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
+  const [qrisImageUrl, setQrisImageUrl] = useState('');
+
+useEffect(() => {
+  fetch('/api/settings', { cache: 'no-store' })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.qrisImageUrl) setQrisImageUrl(data.qrisImageUrl);
+    });
+}, []);
 
   useEffect(() => {
     fetch('/api/products', { cache: 'no-store' })
@@ -359,16 +368,19 @@ function OrderContent() {
               </button>
             </div>
 
-            {paymentMethod === 'QRIS' && (
-              <div className="p-4 bg-stone-800/40 rounded-xl border border-stone-800 text-center space-y-2">
-                <p className="text-xs font-bold text-stone-300">Scan QRIS Kafe untuk Pembayaran</p>
-                <div className="w-36 h-36 mx-auto bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center font-bold text-xs p-2 border border-amber-800">
-                  [ KODE QRIS KAFE ]
-                </div>
-                <p className="text-xs text-amber-400 font-bold">Total: Rp {finalTotalPrice.toLocaleString('id-ID')}</p>
-              </div>
-            )}
-
+           {paymentMethod === 'QRIS' && (
+  <div className="p-4 bg-stone-800/40 rounded-xl border border-stone-800 text-center space-y-2">
+    <p className="text-xs font-bold text-stone-300">Scan QRIS Kafe untuk Pembayaran</p>
+    {qrisImageUrl ? (
+      <img src={qrisImageUrl} alt="Poster QRIS Resmi" className="w-56 mx-auto rounded-xl shadow-lg border border-amber-800" />
+    ) : (
+      <div className="w-44 h-44 mx-auto bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center font-bold text-xs p-2 border border-amber-800">
+        [ KODE QRIS KAFE ]
+      </div>
+    )}
+    <p className="text-xs text-amber-400 font-bold pt-1">Total: Rp {finalTotalPrice.toLocaleString('id-ID')}</p>
+  </div>
+)}
             <div className="pt-2 border-t border-stone-800 text-sm space-y-1">
               <div className="flex justify-between text-xs text-stone-400">
                 <span>Subtotal:</span>

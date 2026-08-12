@@ -16,7 +16,7 @@ interface Product {
 export default function HomePage() {
   const [storeName, setStoreName] = useState('Kopi Artuphay');
   const [address, setAddress] = useState('Jl. Kebon Sirih No. 12, Jakarta');
-  const [phone, setPhone] = useState('081234567890');
+  const [phone, setPhone] = useState('08125054405');
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
