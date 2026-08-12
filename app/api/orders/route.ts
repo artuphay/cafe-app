@@ -1,9 +1,22 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET: Mengambil semua data pesanan untuk Layar Kasir
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (id) {
+      const order = await prisma.order.findUnique({
+        where: { id },
+        include: { items: true },
+      });
+      return NextResponse.json(order);
+    }
+
     const orders = await prisma.order.findMany({
       include: { items: true },
       orderBy: { createdAt: 'desc' },
@@ -14,21 +27,24 @@ export async function GET() {
   }
 }
 
-// POST: Membuat pesanan baru dari Halaman Pelanggan
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tableNumber, items, totalPrice } = body;
+    const { tableNumber, items, totalPrice, discountAmount, promoCode, paymentMethod } = body;
 
     const newOrder = await prisma.order.create({
       data: {
         tableNumber,
         totalPrice,
+        discountAmount: Number(discountAmount || 0),
+        promoCode: promoCode || '',
+        paymentMethod: paymentMethod || 'Cash',
         items: {
-          create: items.map((item: { name: string; qty: number; price: number }) => ({
+          create: items.map((item: { name: string; qty: number; price: number; notes?: string }) => ({
             name: item.name,
             qty: item.qty,
             price: item.price,
+            notes: item.notes || '',
           })),
         },
       },
@@ -41,7 +57,6 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH: Memperbarui status pesanan (Pending -> Memasak -> Selesai)
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();

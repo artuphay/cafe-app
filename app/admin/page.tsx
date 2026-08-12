@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch('/api/orders', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -37,7 +37,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Live Auto-Update data setiap 3 detik
   useEffect(() => {
     fetchOrders();
     const interval = setInterval(fetchOrders, 3000);
@@ -49,13 +48,11 @@ export default function AdminDashboardPage() {
     window.location.href = '/login';
   };
 
-  // Kalkulasi Ringkasan Penjualan
   const completedOrders = orders.filter((o) => o.status === 'Selesai');
   const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
   const totalTransactions = completedOrders.length;
   const avgTransaction = totalTransactions > 0 ? Math.round(totalRevenue / totalTransactions) : 0;
 
-  // Kalkulasi Menu Terlaris
   const itemSalesMap: { [name: string]: { qty: number; revenue: number } } = {};
   completedOrders.forEach((o) => {
     o.items.forEach((item) => {
@@ -76,26 +73,80 @@ export default function AdminDashboardPage() {
     <div className="min-h-screen bg-stone-100 text-stone-800 p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header Dashboard */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-amber-950 text-white p-6 rounded-2xl shadow-lg">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-amber-950 text-white p-6 rounded-2xl shadow-lg gap-4">
           <div>
-            <Link href="/" className="text-xs text-amber-200 underline mb-1 block">← Kembali ke Beranda</Link>
+            <div className="flex items-center gap-2 mb-3">
+              <Link 
+                href="/" 
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-900 hover:bg-amber-800 text-amber-100 text-xs font-bold border border-amber-700/60 shadow-sm transition-all hover:scale-105 active:scale-95"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Beranda Kafe</span>
+              </Link>
+              <span className="text-amber-500/60 text-xs">•</span>
+              <span className="text-amber-300/80 text-xs font-semibold">Dashboard Admin</span>
+            </div>
             <h1 className="text-2xl font-bold">Dashboard Penjualan & Laporan Admin</h1>
-            <p className="text-sm text-amber-200">Ringkasan performa penjualan kafe terbarui secara langsung</p>
+            <p className="text-sm text-amber-200 mt-1">Ringkasan performa penjualan kafe terbarui secara langsung</p>
           </div>
 
-          <div className="mt-4 md:mt-0 flex items-center gap-3">
-            {/* Live Update Indicator */}
-            <div className="flex items-center gap-2 bg-amber-900/80 px-3 py-1.5 rounded-full border border-amber-700/50 text-xs font-semibold text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Live Update
-            </div>
+          <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-3">
+            {/* Kelola Menu */}
+            <Link
+              href="/admin/products"
+              className="bg-amber-800 hover:bg-amber-900 text-amber-100 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow hover:scale-105 active:scale-95"
+            >
+              <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>Kelola Menu</span>
+            </Link>
 
-            {/* Tombol Logout */}
+            {/* QR Code Meja */}
+            <Link
+              href="/admin/tables"
+              className="bg-amber-800 hover:bg-amber-900 text-amber-100 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow hover:scale-105 active:scale-95"
+            >
+              <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              <span>QR Code Meja</span>
+            </Link>
+
+            {/* Kelola Promo */}
+            <Link
+              href="/admin/promos"
+              className="bg-amber-800 hover:bg-amber-900 text-amber-100 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow hover:scale-105 active:scale-95"
+            >
+              <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5z" />
+              </svg>
+              <span>Kelola Promo</span>
+            </Link>
+
+            {/* Pengaturan Kafe */}
+            <Link
+              href="/admin/settings"
+              className="bg-amber-800 hover:bg-amber-900 text-amber-100 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow hover:scale-105 active:scale-95"
+            >
+              <svg className="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Pengaturan Kafe</span>
+            </Link>
+
+            {/* Logout */}
             <button
               onClick={handleLogout}
-              className="bg-red-800 hover:bg-red-900 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-md"
+              className="bg-red-800 hover:bg-red-900 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow flex items-center gap-2 hover:scale-105 active:scale-95"
             >
-              🚪 Logout
+              <svg className="w-4 h-4 text-red-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {/* <span>Logout</span> */}
             </button>
           </div>
         </div>
@@ -118,9 +169,10 @@ export default function AdminDashboardPage() {
 
         {/* Menu Terlaris & Tabel Riwayat Transaksi */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Menu Terlaris */}
           <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-            <h2 className="text-lg font-bold text-amber-950 mb-4 border-b pb-2">🔥 Menu Terlaris</h2>
+            <h2 className="text-lg font-bold text-amber-950 mb-4 border-b pb-2 flex items-center gap-2">
+              <span>🔥</span> Menu Terlaris
+            </h2>
             {topItems.length === 0 ? (
               <p className="text-sm text-stone-400">Belum ada transaksi selesai.</p>
             ) : (
@@ -143,9 +195,10 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {/* Tabel Riwayat Transaksi */}
           <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-            <h2 className="text-lg font-bold text-amber-950 mb-4 border-b pb-2">📋 Riwayat Transaksi</h2>
+            <h2 className="text-lg font-bold text-amber-950 mb-4 border-b pb-2 flex items-center gap-2">
+              <span>📋</span> Riwayat Transaksi
+            </h2>
             {loading ? (
               <p className="text-sm text-stone-500">Memuat data transaksi...</p>
             ) : orders.length === 0 ? (

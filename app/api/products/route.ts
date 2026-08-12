@@ -1,20 +1,20 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET: Ambil semua menu (Otomatis Seed data awal jika kosong)
 export async function GET() {
   try {
     const count = await prisma.product.count();
     if (count === 0) {
       await prisma.product.createMany({
         data: [
-          { name: 'Kopi Susu Senja', category: 'Minuman', price: 22000, description: 'Espresso dengan gula aren dan susu segar' },
-          { name: 'Americano', category: 'Minuman', price: 18000, description: 'Espresso ganda dengan air panas/es' },
-          { name: 'Matcha Latte', category: 'Minuman', price: 25000, description: 'Matcha Jepang dengan susu UHT' },
-          { name: 'Nasi Goreng Spesial', category: 'Makanan', price: 32000, description: 'Nasi goreng dengan telur, ayam, dan kerupuk' },
-          { name: 'Croissant Cokelat', category: 'Dessert', price: 20000, description: 'Roti croissant renyah isi cokelat lumer' },
+          { name: 'Kopi Susu Senja', category: 'Minuman', price: 22000, description: 'Espresso dengan gula aren dan susu segar', imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300' },
+          { name: 'Americano', category: 'Minuman', price: 18000, description: 'Espresso ganda dengan air panas/es', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=300' },
+          { name: 'Matcha Latte', category: 'Minuman', price: 25000, description: 'Matcha Jepang dengan susu UHT', imageUrl: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=300' },
+          { name: 'Nasi Goreng Spesial', category: 'Makanan', price: 32000, description: 'Nasi goreng dengan telur, ayam, dan kerupuk', imageUrl: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=300' },
+          { name: 'Croissant Cokelat', category: 'Dessert', price: 20000, description: 'Roti croissant renyah isi cokelat lumer', imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300' },
         ],
       });
     }
@@ -28,11 +28,10 @@ export async function GET() {
   }
 }
 
-// POST: Tambah menu baru
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, category, price, description } = body;
+    const { name, category, price, description, imageUrl } = body;
 
     const newProduct = await prisma.product.create({
       data: {
@@ -40,6 +39,7 @@ export async function POST(request: Request) {
         category,
         price: Number(price),
         description,
+        imageUrl: imageUrl || 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300',
       },
     });
 
@@ -49,11 +49,10 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH: Edit menu atau ubah status ketersediaan
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, category, price, description, isAvailable } = body;
+    const { id, name, category, price, description, imageUrl, isAvailable } = body;
 
     const updatedProduct = await prisma.product.update({
       where: { id },
@@ -62,6 +61,7 @@ export async function PATCH(request: Request) {
         ...(category !== undefined && { category }),
         ...(price !== undefined && { price: Number(price) }),
         ...(description !== undefined && { description }),
+        ...(imageUrl !== undefined && { imageUrl }),
         ...(isAvailable !== undefined && { isAvailable }),
       },
     });
@@ -72,7 +72,6 @@ export async function PATCH(request: Request) {
   }
 }
 
-// DELETE: Hapus menu
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);

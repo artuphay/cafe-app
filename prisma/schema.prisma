@@ -7,24 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Order {
-  id          String      @id @default(uuid())
-  tableNumber String
-  totalPrice  Int
-  status      String      @default("Pending")
-  createdAt   DateTime    @default(now())
-  items       OrderItem[]
-}
-
-model OrderItem {
-  id      String @id @default(uuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  name    String
-  qty     Int
-  price   Int
-}
-
 model User {
   id       String @id @default(uuid())
   username String @unique
@@ -33,11 +15,60 @@ model User {
 }
 
 model Product {
+  id           String   @id @default(uuid())
+  name         String
+  category     String
+  price        Int
+  description  String
+  imageUrl     String?  @default("https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300")
+  isAvailable  Boolean  @default(true)
+  isBestSeller Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model Promo {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  discountType String   @default("percentage") // percentage / fixed
+  discountVal  Int
+  minSpend     Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Table {
   id          String   @id @default(uuid())
-  name        String
-  category    String
-  price       Int
-  description String
-  isAvailable Boolean  @default(true)
+  tableNumber String   @unique
   createdAt   DateTime @default(now())
+}
+
+model StoreSettings {
+  id         String   @id @default("1")
+  storeName  String   @default("Kopi Artuphay")
+  address    String   @default("Jl. Kebon Sirih No. 12, Jakarta")
+  phone      String   @default("081234567890")
+  footerText String   @default("Terima kasih atas kunjungan Anda!")
+  updatedAt  DateTime @updatedAt
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  tableNumber    String
+  totalPrice     Int
+  discountAmount Int         @default(0)
+  promoCode      String?     @default("")
+  paymentMethod  String      @default("Cash")
+  status         String      @default("Pending")
+  createdAt      DateTime    @default(now())
+  items          OrderItem[]
+}
+
+model OrderItem {
+  id      String  @id @default(uuid())
+  orderId String
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  name    String
+  qty     Int
+  price   Int
+  notes   String? @default("")
 }
