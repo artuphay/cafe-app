@@ -191,7 +191,7 @@ export default function HomePage() {
           <div className="flex gap-6 text-xs text-stone-400">
             <Link href="/menu" className="hover:text-stone-200">Katalog Menu</Link>
             <Link href="/about" className="hover:text-stone-200">Tentang Kami</Link>
-            <Link href="/login" className="hover:text-stone-200">Portal Staf</Link>
+            <Link href="/login" className="hover:text-stone-200">Portal Staff</Link>
           </div>
         </div>
         <p className="text-center text-xs text-stone-600 mt-8">© 2026 {storeName}. All rights reserved.</p>
