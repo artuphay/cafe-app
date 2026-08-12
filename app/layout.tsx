@@ -1,6 +1,30 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Kopi Artuphay - Cafe Management & QR Order System",
+  description: "Sistem pemesanan kafe modern berbasis QR Code meja, layar POS kasir real-time, dan laporan penjualan otomatis.",
+  openGraph: {
+    title: "Kopi Artuphay - Cafe Management & QR Order System",
+    description: "Sistem pemesanan kafe modern berbasis QR Code meja, layar POS kasir real-time, dan laporan penjualan otomatis.",
+    url: "https://cafe-app-dusky-omega.vercel.app",
+    siteName: "Kopi Artuphay Cafe",
+    type: "website",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="id">
+      <body>{children}</body>
+    </html>
+  );
+}
+import { Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
