@@ -49,8 +49,10 @@ model StoreSettings {
   phone        String   @default("081234567890")
   footerText   String   @default("Terima kasih atas kunjungan Anda!")
   qrisImageUrl String?  @default("")
+  logoUrl      String?  @default("")
   updatedAt    DateTime @updatedAt
 }
+
 model Order {
   id             String      @id @default(uuid())
   tableNumber    String
