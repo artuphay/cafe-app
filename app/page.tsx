@@ -197,21 +197,26 @@ useEffect(() => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-stone-950 border-t border-stone-800/80 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div>
-            <span className="text-lg font-black text-amber-500 block mb-1">{storeName}</span>
-            <p className="text-xs text-stone-400">{address}</p>
-            <p className="text-xs text-stone-500 mt-1">Hubungi: {phone}</p>
-          </div>
-          <div className="flex gap-6 text-xs text-stone-400">
-            <Link href="/menu" className="hover:text-stone-200">Katalog Menu</Link>
-            <Link href="/about" className="hover:text-stone-200">Tentang Kami</Link>
-            <Link href="/login" className="hover:text-stone-200">Portal Staff</Link>
-          </div>
-        </div>
-        <p className="text-center text-xs text-stone-600 mt-8">© 2026 {storeName}. All rights reserved.</p>
-      </footer>
+ <footer className="bg-stone-950 border-t border-stone-800/80 py-12 px-6">
+  <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+    <div>
+      <span className="text-lg font-black text-amber-500 block mb-1">{storeName}</span>
+      <p className="text-xs text-stone-400">{address}</p>
+      <p className="text-xs text-stone-500 mt-1">Hubungi: {phone}</p>
+    </div>
+    <div className="flex gap-6 text-xs text-stone-400">
+      <Link href="/menu" className="hover:text-stone-200">Katalog Menu</Link>
+      <Link href="/about" className="hover:text-stone-200">Tentang Kami</Link>
+      <Link href="/login" className="hover:text-stone-200">Portal Staf</Link>
+    </div>
+  </div>
+  <div className="text-center text-xs text-stone-500 mt-8 space-y-1">
+    <p>© 2026 {storeName}. All rights reserved.</p>
+    <p className="text-[11px] text-amber-500/80">
+      Developed with ❤️ by <strong className="text-amber-400">Muhammad Ari Syahputra Sandan (Artuphay)</strong>
+    </p>
+  </div>
+</footer>
     </div>
   );
 }

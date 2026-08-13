@@ -1,6 +1,7 @@
 {
   "name": "cafe-app",
   "version": "0.1.0",
+  "author": "Muhammad Ari Syahputra Sandan (Artuphay)",
   "private": true,
   "scripts": {
   "dev": "next dev",
