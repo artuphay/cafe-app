@@ -35,6 +35,11 @@ function OrderContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Identitas Pelanggan & Auto-Remember
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [returningCustomer, setReturningCustomer] = useState<{ name: string; phone: string; lastItem?: string } | null>(null);
+
   // Modal Checkout & Promo State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'QRIS'>('Cash');
@@ -43,12 +48,19 @@ function OrderContent() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
   const [qrisImageUrl, setQrisImageUrl] = useState('');
-  // Sapaan Pelanggan & Auto-Remember
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [returningCustomer, setReturningCustomer] = useState<{ name: string; phone: string; lastItem?: string } | null>(null);
 
   useEffect(() => {
+    fetch('/api/products', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => setMenuList(data))
+      .catch((err) => console.error(err));
+
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.qrisImageUrl) setQrisImageUrl(data.qrisImageUrl);
+      });
+
     // Ambil data pelanggan setia dari LocalStorage HP
     const savedName = localStorage.getItem('cafe_customer_name');
     const savedPhone = localStorage.getItem('cafe_customer_phone');
@@ -59,21 +71,6 @@ function OrderContent() {
       setCustomerPhone(savedPhone);
       setReturningCustomer({ name: savedName, phone: savedPhone, lastItem: savedLastItem || undefined });
     }
-  }, []);
-
-useEffect(() => {
-  fetch('/api/settings', { cache: 'no-store' })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.qrisImageUrl) setQrisImageUrl(data.qrisImageUrl);
-    });
-}, []);
-
-  useEffect(() => {
-    fetch('/api/products', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => setMenuList(data))
-      .catch((err) => console.error(err));
   }, []);
 
   const addToCart = (id: string) => {
@@ -136,17 +133,10 @@ useEffect(() => {
   };
 
   const processOrder = async () => {
-    // Simpan identitas ke LocalStorage browser HP untuk kunjungan berikutnya
-  if (customerName && customerPhone) {
-    localStorage.setItem('cafe_customer_name', customerName);
-    localStorage.setItem('cafe_customer_phone', customerPhone);
-    if (itemsToSubmit.length > 0) {
-      localStorage.setItem('cafe_last_item', itemsToSubmit[0].name);
-    }
-  }
     if (totalItems === 0) return;
     setIsLoading(true);
 
+    // 1. Didefinisikan DAHULU sebelum dipakai
     const itemsToSubmit = Object.entries(cart).map(([id, qty]) => {
       const item = menuList.find((m) => m.id === id)!;
       return {
@@ -156,6 +146,15 @@ useEffect(() => {
         notes: notes[id] || '',
       };
     });
+
+    // 2. Simpan identitas pelanggan ke LocalStorage
+    if (customerName && customerPhone) {
+      localStorage.setItem('cafe_customer_name', customerName);
+      localStorage.setItem('cafe_customer_phone', customerPhone);
+      if (itemsToSubmit.length > 0) {
+        localStorage.setItem('cafe_last_item', itemsToSubmit[0].name);
+      }
+    }
 
     try {
       const res = await fetch('/api/orders', {
@@ -168,6 +167,8 @@ useEffect(() => {
           discountAmount,
           promoCode: appliedPromo ? appliedPromo.code : '',
           paymentMethod,
+          customerName,
+          customerPhone,
         }),
       });
 
@@ -203,13 +204,25 @@ useEffect(() => {
       <div className="backdrop-blur-md bg-stone-900/90 border-b border-stone-800 p-4 sticky top-0 z-10 flex justify-between items-center shadow-lg">
         <div>
           <Link href="/" className="text-xs underline text-amber-400 block mb-1">← Beranda Kafe</Link>
-          <h1 className="text-xl font-black text-stone-100">Pesan - Meja #{tableNumber}</h1>
+          <h1 className="text-xl font-bold text-stone-100">Pesan - Meja #{tableNumber}</h1>
         </div>
         <div className="text-right">
           <span className="text-xs text-stone-400 block">Total Keranjang</span>
           <span className="font-extrabold text-lg text-amber-400">Rp {finalTotalPrice.toLocaleString('id-ID')}</span>
         </div>
       </div>
+
+      {/* Banner Sapaan Pelanggan Setia */}
+      {returningCustomer && (
+        <div className="bg-amber-950/60 border-b border-amber-800/50 p-3 px-4 text-xs text-amber-200 flex justify-between items-center max-w-2xl mx-auto">
+          <span>👋 Selamat datang kembali, <strong>{returningCustomer.name}</strong>!</span>
+          {returningCustomer.lastItem && (
+            <span className="text-[11px] text-amber-400 font-bold bg-amber-900/80 px-2 py-0.5 rounded-full border border-amber-700">
+              Terakhir dipesan: {returningCustomer.lastItem}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Pencarian & Filter */}
       <div className="p-4 max-w-2xl mx-auto space-y-3">
@@ -339,28 +352,31 @@ useEffect(() => {
 
       {/* Modal Checkout */}
       {showCheckoutModal && (
-        
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 flex items-center justify-center p-4">
           <div className="bg-stone-900 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-stone-800 text-stone-100 max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-amber-400 border-b border-stone-800 pb-2">Konfirmasi & Pembayaran</h2>
             <p className="text-xs text-stone-400">Pilih metode pembayaran untuk Meja #{tableNumber}</p>
-            <div className="space-y-2 pt-2 border-t border-stone-800">
-    <label className="block text-xs font-bold text-stone-300">Identitas Pelanggan (Untuk Poin & Promo)</label>
-    <input
-      type="text"
-      value={customerName}
-      onChange={(e) => setCustomerName(e.target.value)}
-      placeholder="Nama Anda (contoh: Kak Budi)"
-      className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
-    />
-    <input
-      type="tel"
-      value={customerPhone}
-      onChange={(e) => setCustomerPhone(e.target.value)}
-      placeholder="Nomor WhatsApp (contoh: 081234567890)"
-      className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
-    />
-  </div>
+
+            {/* Identitas Pelanggan (Ganti Poin) */}
+            <div className="space-y-2 pt-1 border-t border-stone-800">
+              <label className="block text-xs font-bold text-amber-400">👤 Identitas Pelanggan (Untuk Poin & Diskon)</label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Nama Anda (contoh: Kak Budi)"
+                className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
+              />
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="Nomor WhatsApp (contoh: 081234567890)"
+                className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            {/* Input Kode Promo */}
             <div className="p-3 bg-stone-800/60 rounded-xl border border-stone-700/60 space-y-2">
               <label className="block text-xs font-bold text-stone-300">🎟️ Punya Kode Promo / Kupon?</label>
               <div className="flex gap-2">
@@ -388,6 +404,7 @@ useEffect(() => {
               )}
             </div>
 
+            {/* Metode Pembayaran */}
             <div className="space-y-2">
               <button
                 onClick={() => setPaymentMethod('Cash')}
@@ -410,19 +427,20 @@ useEffect(() => {
               </button>
             </div>
 
-           {paymentMethod === 'QRIS' && (
-  <div className="p-4 bg-stone-800/40 rounded-xl border border-stone-800 text-center space-y-2">
-    <p className="text-xs font-bold text-stone-300">Scan QRIS Kafe untuk Pembayaran</p>
-    {qrisImageUrl ? (
-      <img src={qrisImageUrl} alt="Poster QRIS Resmi" className="w-56 mx-auto rounded-xl shadow-lg border border-amber-800" />
-    ) : (
-      <div className="w-44 h-44 mx-auto bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center font-bold text-xs p-2 border border-amber-800">
-        [ KODE QRIS KAFE ]
-      </div>
-    )}
-    <p className="text-xs text-amber-400 font-bold pt-1">Total: Rp {finalTotalPrice.toLocaleString('id-ID')}</p>
-  </div>
-)}
+            {paymentMethod === 'QRIS' && (
+              <div className="p-4 bg-stone-800/40 rounded-xl border border-stone-800 text-center space-y-2">
+                <p className="text-xs font-bold text-stone-300">Scan QRIS Kafe untuk Pembayaran</p>
+                {qrisImageUrl ? (
+                  <img src={qrisImageUrl} alt="Poster QRIS" className="w-52 mx-auto rounded-xl shadow-lg border border-amber-800" />
+                ) : (
+                  <div className="w-36 h-36 mx-auto bg-amber-950 text-amber-400 rounded-xl flex items-center justify-center font-bold text-xs p-2 border border-amber-800">
+                    [ KODE QRIS KAFE ]
+                  </div>
+                )}
+                <p className="text-xs text-amber-400 font-bold pt-1">Total: Rp {finalTotalPrice.toLocaleString('id-ID')}</p>
+              </div>
+            )}
+
             <div className="pt-2 border-t border-stone-800 text-sm space-y-1">
               <div className="flex justify-between text-xs text-stone-400">
                 <span>Subtotal:</span>
