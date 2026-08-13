@@ -43,6 +43,23 @@ function OrderContent() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
   const [qrisImageUrl, setQrisImageUrl] = useState('');
+  // Sapaan Pelanggan & Auto-Remember
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [returningCustomer, setReturningCustomer] = useState<{ name: string; phone: string; lastItem?: string } | null>(null);
+
+  useEffect(() => {
+    // Ambil data pelanggan setia dari LocalStorage HP
+    const savedName = localStorage.getItem('cafe_customer_name');
+    const savedPhone = localStorage.getItem('cafe_customer_phone');
+    const savedLastItem = localStorage.getItem('cafe_last_item');
+
+    if (savedName && savedPhone) {
+      setCustomerName(savedName);
+      setCustomerPhone(savedPhone);
+      setReturningCustomer({ name: savedName, phone: savedPhone, lastItem: savedLastItem || undefined });
+    }
+  }, []);
 
 useEffect(() => {
   fetch('/api/settings', { cache: 'no-store' })
@@ -119,6 +136,14 @@ useEffect(() => {
   };
 
   const processOrder = async () => {
+    // Simpan identitas ke LocalStorage browser HP untuk kunjungan berikutnya
+  if (customerName && customerPhone) {
+    localStorage.setItem('cafe_customer_name', customerName);
+    localStorage.setItem('cafe_customer_phone', customerPhone);
+    if (itemsToSubmit.length > 0) {
+      localStorage.setItem('cafe_last_item', itemsToSubmit[0].name);
+    }
+  }
     if (totalItems === 0) return;
     setIsLoading(true);
 
@@ -314,11 +339,28 @@ useEffect(() => {
 
       {/* Modal Checkout */}
       {showCheckoutModal && (
+        
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 flex items-center justify-center p-4">
           <div className="bg-stone-900 rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border border-stone-800 text-stone-100 max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-bold text-amber-400 border-b border-stone-800 pb-2">Konfirmasi & Pembayaran</h2>
             <p className="text-xs text-stone-400">Pilih metode pembayaran untuk Meja #{tableNumber}</p>
-
+            <div className="space-y-2 pt-2 border-t border-stone-800">
+    <label className="block text-xs font-bold text-stone-300">Identitas Pelanggan (Untuk Poin & Promo)</label>
+    <input
+      type="text"
+      value={customerName}
+      onChange={(e) => setCustomerName(e.target.value)}
+      placeholder="Nama Anda (contoh: Kak Budi)"
+      className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
+    />
+    <input
+      type="tel"
+      value={customerPhone}
+      onChange={(e) => setCustomerPhone(e.target.value)}
+      placeholder="Nomor WhatsApp (contoh: 081234567890)"
+      className="w-full text-xs p-2.5 rounded-xl border border-stone-700 bg-stone-900 text-stone-100 focus:outline-none focus:border-amber-500"
+    />
+  </div>
             <div className="p-3 bg-stone-800/60 rounded-xl border border-stone-700/60 space-y-2">
               <label className="block text-xs font-bold text-stone-300">🎟️ Punya Kode Promo / Kupon?</label>
               <div className="flex gap-2">

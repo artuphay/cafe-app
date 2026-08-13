@@ -30,15 +30,51 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tableNumber, items, totalPrice, discountAmount, promoCode, paymentMethod } = body;
+    const { tableNumber, items, totalPrice, discountAmount, promoCode, paymentMethod, customerName, customerPhone } = body;
+
+    let customerId = null;
+
+    if (customerPhone && customerPhone.trim() !== '') {
+      const cleanPhone = customerPhone.trim();
+      const cleanName = customerName?.trim() || 'Pelanggan Setia';
+
+      const existingCustomer = await prisma.customer.findUnique({
+        where: { phone: cleanPhone },
+      });
+
+      if (existingCustomer) {
+        const updatedCustomer = await prisma.customer.update({
+          where: { id: existingCustomer.id },
+          data: {
+            name: cleanName,
+            totalOrders: existingCustomer.totalOrders + 1,
+            totalSpent: existingCustomer.totalSpent + Number(totalPrice),
+          },
+        });
+        customerId = updatedCustomer.id;
+      } else {
+        const newCustomer = await prisma.customer.create({
+          data: {
+            phone: cleanPhone,
+            name: cleanName,
+            totalOrders: 1,
+            totalSpent: Number(totalPrice),
+          },
+        });
+        customerId = newCustomer.id;
+      }
+    }
 
     const newOrder = await prisma.order.create({
       data: {
         tableNumber,
-        totalPrice,
+        totalPrice: Number(totalPrice),
         discountAmount: Number(discountAmount || 0),
         promoCode: promoCode || '',
         paymentMethod: paymentMethod || 'Cash',
+        customerName: customerName || '',
+        customerPhone: customerPhone || '',
+        customerId,
         items: {
           create: items.map((item: { name: string; qty: number; price: number; notes?: string }) => ({
             name: item.name,

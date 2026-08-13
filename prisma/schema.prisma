@@ -29,7 +29,7 @@ model Product {
 model Promo {
   id           String   @id @default(uuid())
   code         String   @unique
-  discountType String   @default("percentage") // percentage / fixed
+  discountType String   @default("percentage")
   discountVal  Int
   minSpend     Int      @default(0)
   isActive     Boolean  @default(true)
@@ -53,9 +53,24 @@ model StoreSettings {
   updatedAt    DateTime @updatedAt
 }
 
+model Customer {
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  name        String
+  totalOrders Int      @default(1)
+  totalSpent  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+}
+
 model Order {
   id             String      @id @default(uuid())
   tableNumber    String
+  customerName   String?     @default("")
+  customerPhone  String?     @default("")
+  customerId     String?
+  customer       Customer?   @relation(fields: [customerId], references: [id])
   totalPrice     Int
   discountAmount Int         @default(0)
   promoCode      String?     @default("")
