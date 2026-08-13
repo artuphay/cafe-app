@@ -9,6 +9,7 @@ export default function StoreSettingsPage() {
   const [phone, setPhone] = useState('');
   const [footerText, setFooterText] = useState('');
   const [qrisImageUrl, setQrisImageUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -21,9 +22,42 @@ export default function StoreSettingsPage() {
         setPhone(data.phone || '');
         setFooterText(data.footerText || '');
         setQrisImageUrl(data.qrisImageUrl || '');
+        setLogoUrl(data.logoUrl || '');
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const SIZE = 200;
+        let width = img.width;
+        let height = img.height;
+
+        const minSide = Math.min(width, height);
+        const startX = (width - minSide) / 2;
+        const startY = (height - minSide) / 2;
+
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, startX, startY, minSide, minSide, 0, 0, SIZE, SIZE);
+          const compressed = canvas.toDataURL('image/png', 0.9);
+          setLogoUrl(compressed);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleQrisUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,11 +100,11 @@ export default function StoreSettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storeName, address, phone, footerText, qrisImageUrl }),
+        body: JSON.stringify({ storeName, address, phone, footerText, qrisImageUrl, logoUrl }),
       });
 
       if (res.ok) {
-        alert('Pengaturan kafe & QRIS berhasil diperbarui!');
+        alert('Pengaturan kafe & Logo berhasil diperbarui!');
       } else {
         alert('Gagal menyimpan pengaturan.');
       }
@@ -84,7 +118,6 @@ export default function StoreSettingsPage() {
   return (
     <div className="min-h-screen bg-stone-100 text-stone-800 p-6 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-amber-950 text-white p-6 rounded-2xl shadow-lg gap-4">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -102,22 +135,38 @@ export default function StoreSettingsPage() {
             </div>
 
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <svg className="w-6 h-6 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Pengaturan Identitas & QRIS Kafe</span>
+              <span>⚙️</span>
+              <span>Pengaturan Identitas & Logo Kafe</span>
             </h1>
-            <p className="text-sm text-amber-200 mt-1">Ubah nama kafe, alamat, kontak, dan gambar poster QRIS</p>
+            <p className="text-sm text-amber-200 mt-1">Ubah logo kafe, nama, alamat, kontak, dan poster QRIS</p>
           </div>
         </div>
 
-        {/* Form Pengaturan */}
         <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
           {loading ? (
             <p className="text-sm text-stone-500">Memuat pengaturan...</p>
           ) : (
             <form onSubmit={handleSave} className="space-y-4">
+              {/* Unggah Logo Kafe */}
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
+                <label className="block text-xs font-bold text-amber-950">Unggah Logo Kafe (Icon Header)</label>
+                <div className="flex items-center gap-4">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo" className="w-16 h-16 rounded-2xl object-cover border border-amber-300 shadow" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-amber-900 text-amber-100 flex items-center justify-center font-bold text-2xl shadow">
+                      ☕
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="text-xs text-stone-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-900 file:text-white hover:file:bg-amber-950 cursor-pointer border border-stone-300 rounded-xl p-1 flex-1"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-stone-600 mb-1">Nama Kafe</label>
                 <input
@@ -163,9 +212,8 @@ export default function StoreSettingsPage() {
                 />
               </div>
 
-              {/* Unggah Poster QRIS Resmi */}
               <div className="pt-2 border-t border-stone-200">
-                <label className="block text-xs font-bold text-stone-600 mb-1">Unggah Poster QRIS Resmi Kafe (Dari HP/Laptop)</label>
+                <label className="block text-xs font-bold text-stone-600 mb-1">Unggah Poster QRIS Resmi Kafe</label>
                 <input
                   type="file"
                   accept="image/*"

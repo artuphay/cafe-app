@@ -15,6 +15,7 @@ export async function GET() {
           phone: '081234567890',
           footerText: 'Terima kasih atas kunjungan Anda!',
           qrisImageUrl: '',
+          logoUrl: '',
         },
       });
     }
@@ -27,7 +28,7 @@ export async function GET() {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { storeName, address, phone, footerText, qrisImageUrl } = body;
+    const { storeName, address, phone, footerText, qrisImageUrl, logoUrl } = body;
 
     const updated = await prisma.storeSettings.upsert({
       where: { id: '1' },
@@ -37,8 +38,9 @@ export async function PATCH(request: Request) {
         ...(phone !== undefined && { phone }),
         ...(footerText !== undefined && { footerText }),
         ...(qrisImageUrl !== undefined && { qrisImageUrl }),
+        ...(logoUrl !== undefined && { logoUrl }),
       },
-      create: { id: '1', storeName, address, phone, footerText, qrisImageUrl },
+      create: { id: '1', storeName, address, phone, footerText, qrisImageUrl, logoUrl },
     });
 
     return NextResponse.json(updated);

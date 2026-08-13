@@ -18,6 +18,18 @@ export default function HomePage() {
   const [address, setAddress] = useState('Jl. Kebon Sirih No. 12, Jakarta');
   const [phone, setPhone] = useState('08125054405');
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [logoUrl, setLogoUrl] = useState('');
+
+useEffect(() => {
+  fetch('/api/settings')
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.storeName) setStoreName(data.storeName);
+      if (data.address) setAddress(data.address);
+      if (data.phone) setPhone(data.phone);
+      if (data.logoUrl) setLogoUrl(data.logoUrl);
+    });
+}, []);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -43,13 +55,17 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-stone-900/90 border-b border-stone-800/80 px-6 py-4">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-amber-900 flex items-center justify-center text-xl shadow-lg shadow-amber-900/20 group-hover:scale-105 transition">
-              ☕
-            </div>
-            <span className="text-xl font-black tracking-tight text-stone-100 group-hover:text-amber-400 transition">
-              {storeName}
-            </span>
-          </Link>
+  {logoUrl ? (
+    <img src={logoUrl} alt={storeName} className="w-10 h-10 rounded-xl object-cover border border-amber-800 shadow-lg shadow-amber-900/20 group-hover:scale-105 transition" />
+  ) : (
+    <div className="w-10 h-10 rounded-xl bg-amber-900 flex items-center justify-center text-xl shadow-lg shadow-amber-900/20 group-hover:scale-105 transition">
+      ☕
+    </div>
+  )}
+  <span className="text-xl font-black tracking-tight text-stone-100 group-hover:text-amber-400 transition">
+    {storeName}
+  </span>
+</Link>
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-stone-300">
             <Link href="/menu" className="hover:text-amber-400 transition">
